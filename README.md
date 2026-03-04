@@ -1,4 +1,4 @@
-# dotnet-signalr-chat-game-concept
+# SignalR Chat and Game Concept
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)
 ![SignalR](https://img.shields.io/badge/SignalR-realtime-blue)
