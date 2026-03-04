@@ -81,7 +81,7 @@ public class PingPongHub : Hub
         if (!gameCanStart)
         {
             await Clients.Caller.SendAsync("WaitingForOpponent");
-            await Clients.Others.SendAsync("LobbyUpdate", playerName);
+            await Clients.All.SendAsync("LobbyUpdate", playerName);
         }
         else
         {
@@ -176,10 +176,10 @@ public class PingPongHub : Hub
     }
 
     // --- In-game messages ----------------------------------------------------
-    public async Task SendGameState(float ballX, float ballY, float paddle1Y, float paddle2Y, int score1, int score2)
+    public async Task SendGameState(float ballX, float ballY, float ballVx, float ballVy, float paddle1Y, float paddle2Y, int score1, int score2)
     {
         if (Context.ConnectionId != _p1Id || _p2Id == null) return;
-        await Clients.Client(_p2Id).SendAsync("ReceiveGameState", ballX, ballY, paddle1Y, paddle2Y, score1, score2);
+        await Clients.Client(_p2Id).SendAsync("ReceiveGameState", ballX, ballY, ballVx, ballVy, paddle1Y, paddle2Y, score1, score2);
     }
 
     public async Task SendPaddleMove(float y)

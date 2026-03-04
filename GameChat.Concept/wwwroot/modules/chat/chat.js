@@ -58,6 +58,10 @@ export function initChat() {
             onlineCountEl.innerHTML = `<span class="online-dot">●</span> ${count} ${count === 1 ? 'pessoa' : 'pessoas'} online`;
     });
 
+    connection.on('PaintActivityUpdate', (names) => {
+        window.dispatchEvent(new CustomEvent('paint:activityupdate', { detail: names }));
+    });
+
     // ── Typing indicator ───────────────────────────────────────────────────────
 
     const typingEl = document.getElementById('typing-indicator');

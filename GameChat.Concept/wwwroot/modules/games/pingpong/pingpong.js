@@ -74,9 +74,12 @@ export async function init() {
     let paddle1Y = H / 2 - PADDLE_H / 2;
     let paddle2Y = H / 2 - PADDLE_H / 2;
     let keys = {};
-    let lastSendTime  = 0;   // throttle SendGameState (~30 Hz)
-    let lastPaddle2Y  = -1;
-    const SEND_RATE_MS = 33; // ~30 Hz
+    let lastSendTime    = 0;    // throttle SendGameState (~30 Hz)
+    let lastP2SendTime  = 0;    // throttle P2 SendPaddleMove (~30 Hz)
+    let lastPaddle2Y    = -1;
+    let lbvx            = 0;    // last known ball vx (for P2 extrapolation)
+    let lbvy            = 0;    // last known ball vy (for P2 extrapolation)
+    const SEND_RATE_MS  = 33;   // ~30 Hz
 
     // -- Helpers --------------------------------------------------------------
     function show(el) { el.classList.remove('hidden'); }
@@ -274,9 +277,10 @@ export async function init() {
     });
 
     // -- Receive state (P2) ---------------------------------------------------
-    connection.on('ReceiveGameState', (rbx, rby, rp1y, rp2y, rs1, rs2) => {
+    connection.on('ReceiveGameState', (rbx, rby, rvx, rvy, rp1y, rp2y, rs1, rs2) => {
         if (mySlot !== 2) return;
         bx = rbx; by = rby;
+        lbvx = rvx; lbvy = rvy;
         paddle1Y = rp1y;
         score1 = rs1; score2 = rs2;
         score1El.textContent = String(score1);
@@ -358,18 +362,31 @@ export async function init() {
     document.addEventListener('keydown', e => { keys[e.key] = true; });
     document.addEventListener('keyup',   e => { keys[e.key] = false; });
 
-    function movePaddles() {
+    function movePaddles(ts) {
         if (mySlot === 1) {
             if (keys['ArrowUp'])   paddle1Y = Math.max(0, paddle1Y - PADDLE_SPD);
             if (keys['ArrowDown']) paddle1Y = Math.min(H - PADDLE_H, paddle1Y + PADDLE_SPD);
         } else if (mySlot === 2) {
             if (keys['ArrowUp'])   paddle2Y = Math.max(0, paddle2Y - PADDLE_SPD);
             if (keys['ArrowDown']) paddle2Y = Math.min(H - PADDLE_H, paddle2Y + PADDLE_SPD);
-            if (paddle2Y !== lastPaddle2Y) {
-                lastPaddle2Y = paddle2Y;
+            if (paddle2Y !== lastPaddle2Y && ts - lastP2SendTime >= SEND_RATE_MS) {
+                lastPaddle2Y   = paddle2Y;
+                lastP2SendTime = ts;
                 connection.invoke('SendPaddleMove', paddle2Y).catch(() => {});
             }
         }
+    }
+
+    // -- Local ball extrapolation for P2 (wall bounces only, P1 is authoritative) --
+    function extrapolateP2() {
+        if (mySlot !== 2 || countdownActive) return;
+        bx += lbvx;
+        by += lbvy;
+        if (by - BALL_R < 0) { by = BALL_R;       lbvy = -lbvy; }
+        if (by + BALL_R > H) { by = H - BALL_R;   lbvy = -lbvy; }
+        // clamp x — P1 is authoritative for out-of-bounds and scoring
+        if (bx - BALL_R < 0)   bx = BALL_R;
+        if (bx + BALL_R > W)   bx = W - BALL_R;
     }
 
     // -- Physics (P1 only) ----------------------------------------------------
@@ -409,7 +426,7 @@ export async function init() {
 
         if (ts - lastSendTime >= SEND_RATE_MS) {
             lastSendTime = ts;
-            connection.invoke('SendGameState', bx, by, paddle1Y, paddle2Y, score1, score2).catch(() => {});
+            connection.invoke('SendGameState', bx, by, vx, vy, paddle1Y, paddle2Y, score1, score2).catch(() => {});
         }
     }
 
@@ -450,8 +467,9 @@ export async function init() {
         stopGameLoop();
         function loop(ts) {
             if (mySlot === 0 || mySlot === 3) return;
-            movePaddles();
+            movePaddles(ts);
             updatePhysics(ts);
+            extrapolateP2();
             drawFrame();
             animId = requestAnimationFrame(loop);
         }

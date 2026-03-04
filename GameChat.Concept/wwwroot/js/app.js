@@ -14,6 +14,7 @@ const CHAT = {
 const GAMES = [PingPong, Paint];
 
 const initializedGames = new Set();
+let activeGameId = null;
 
 function injectCSS(href) {
     const link = document.createElement('link');
@@ -48,6 +49,15 @@ async function registerGames() {
 }
 
 async function activateGame(id) {
+    if (activeGameId && activeGameId !== id) {
+        const outgoing = GAMES.find(g => g.meta.id === activeGameId);
+        if (outgoing?.destroy) {
+            outgoing.destroy();
+            initializedGames.delete(activeGameId);
+        }
+    }
+    activeGameId = id;
+
     document.querySelectorAll('.game-tabs .tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === id);
     });
@@ -112,6 +122,13 @@ async function bootApp() {
     await registerGames();
     await activateGame(GAMES[0].meta.id);
 }
+
+// ── Cross-module tab notifications ───────────────────────────────────────────
+window.addEventListener('paint:activityupdate', (e) => {
+    const names  = e.detail ?? [];
+    const btn    = document.querySelector('.game-tabs .tab-btn[data-tab="paint"]');
+    if (btn) btn.dataset.notify = names.length > 0 ? 'true' : 'false';
+});
 
 if (!hasUserName()) {
     openModal();
