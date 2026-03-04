@@ -1,6 +1,7 @@
 import { initChat }  from '../modules/chat/chat.js';
 import { getUserName, setUserName, hasUserName } from './user.js';
 import * as PingPong from '../modules/games/pingpong/pingpong.js';
+import * as Paint from '../modules/games/paint/paint.js';
 
 // ── Chat module ────────────────────────────────────────────────────────────────
 const CHAT = {
@@ -10,7 +11,7 @@ const CHAT = {
 
 // ── Game registry ─────────────────────────────────────────────────────────────
 // Add new game modules here:
-const GAMES = [PingPong];
+const GAMES = [PingPong, Paint];
 
 const initializedGames = new Set();
 

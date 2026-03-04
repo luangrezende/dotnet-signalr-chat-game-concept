@@ -1,6 +1,4 @@
-﻿// --- PingPong Module ---------------------------------------------------------
-
-import { getUserName } from '../../../js/user.js';
+﻿import { getUserName } from '../../../js/user.js';
 
 export const meta = {
     id:       'pingpong',
@@ -76,6 +74,9 @@ export async function init() {
     let paddle1Y = H / 2 - PADDLE_H / 2;
     let paddle2Y = H / 2 - PADDLE_H / 2;
     let keys = {};
+    let lastSendTime  = 0;   // throttle SendGameState (~30 Hz)
+    let lastPaddle2Y  = -1;
+    const SEND_RATE_MS = 33; // ~30 Hz
 
     // -- Helpers --------------------------------------------------------------
     function show(el) { el.classList.remove('hidden'); }
@@ -364,12 +365,15 @@ export async function init() {
         } else if (mySlot === 2) {
             if (keys['ArrowUp'])   paddle2Y = Math.max(0, paddle2Y - PADDLE_SPD);
             if (keys['ArrowDown']) paddle2Y = Math.min(H - PADDLE_H, paddle2Y + PADDLE_SPD);
-            connection.invoke('SendPaddleMove', paddle2Y).catch(() => {});
+            if (paddle2Y !== lastPaddle2Y) {
+                lastPaddle2Y = paddle2Y;
+                connection.invoke('SendPaddleMove', paddle2Y).catch(() => {});
+            }
         }
     }
 
     // -- Physics (P1 only) ----------------------------------------------------
-    function updatePhysics() {
+    function updatePhysics(ts) {
         if (mySlot !== 1 || countdownActive) return;
 
         bx += vx; by += vy;
@@ -403,7 +407,10 @@ export async function init() {
             resetBall(1);
         }
 
-        connection.invoke('SendGameState', bx, by, paddle1Y, paddle2Y, score1, score2).catch(() => {});
+        if (ts - lastSendTime >= SEND_RATE_MS) {
+            lastSendTime = ts;
+            connection.invoke('SendGameState', bx, by, paddle1Y, paddle2Y, score1, score2).catch(() => {});
+        }
     }
 
     function bouncePaddle(ballY, paddleY, dirMult) {
@@ -441,10 +448,10 @@ export async function init() {
     // -- Game loop ------------------------------------------------------------
     function startGameLoop() {
         stopGameLoop();
-        function loop() {
+        function loop(ts) {
             if (mySlot === 0 || mySlot === 3) return;
             movePaddles();
-            updatePhysics();
+            updatePhysics(ts);
             drawFrame();
             animId = requestAnimationFrame(loop);
         }

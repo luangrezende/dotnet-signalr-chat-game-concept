@@ -10,6 +10,7 @@ builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection(ChatOpt
 builder.Services.Configure<PingPongOptions>(builder.Configuration.GetSection(PingPongOptions.Section));
 builder.Services.AddSingleton<ChatHistoryService>();
 builder.Services.AddSingleton<OnlineCounterService>();
+builder.Services.AddSingleton<PaintHistoryService>();
 
 var app = builder.Build();
 
@@ -24,5 +25,6 @@ app.MapGet("/api/config", (IOptions<PingPongOptions> pp) => Results.Ok(new
 
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<PingPongHub>("/pingponghub");
+app.MapHub<PaintHub>("/painthub");
 
 app.Run();
