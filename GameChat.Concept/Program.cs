@@ -9,6 +9,7 @@ builder.Services.AddSignalR();
 builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection(ChatOptions.Section));
 builder.Services.Configure<PingPongOptions>(builder.Configuration.GetSection(PingPongOptions.Section));
 builder.Services.AddSingleton<ChatHistoryService>();
+builder.Services.AddSingleton<OnlineCounterService>();
 
 var app = builder.Build();
 

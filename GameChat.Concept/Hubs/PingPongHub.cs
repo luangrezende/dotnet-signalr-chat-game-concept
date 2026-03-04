@@ -15,6 +15,21 @@ public class PingPongHub : Hub
     private static string? _p2Id, _p2Name;
     private static bool _p1WantsRematch, _p2WantsRematch;
 
+    // ─── Connect ──────────────────────────────────────────────────────────────
+
+    public override async Task OnConnectedAsync()
+    {
+        await base.OnConnectedAsync();
+        // Send current lobby state (P1 waiting alone) to the new client
+        string? waiting = null;
+        lock (_lock)
+        {
+            if (_p1Id != null && _p2Id == null)
+                waiting = _p1Name;
+        }
+        await Clients.Caller.SendAsync("LobbyUpdate", waiting);
+    }
+
     // ─── Join ───────────────────────────────────────────────────────────────
 
     public async Task JoinGame(string playerName)
@@ -48,16 +63,29 @@ public class PingPongHub : Hub
         if (!gameCanStart)
         {
             await Clients.Caller.SendAsync("WaitingForOpponent");
+            await Clients.Others.SendAsync("LobbyUpdate", playerName);
         }
         else
         {
+            await Clients.All.SendAsync("LobbyUpdate", (string?)null);
             await Clients.Client(_p1Id!).SendAsync("GameStart", _p1Name, _p2Name, 1);
             await Clients.Client(_p2Id!).SendAsync("GameStart", _p1Name, _p2Name, 2);
         }
     }
 
     // ─── In-game messages ────────────────────────────────────────────────────
-
+    /// <summary>P1 cancels while waiting in queue.</summary>
+    public async Task CancelQueue()
+    {
+        lock (_lock)
+        {
+            if (Context.ConnectionId != _p1Id || _p2Id != null) return;
+            _p1Id = null;
+            _p1Name = null;
+        }
+        await Clients.Caller.SendAsync("QueueCancelled");
+        await Clients.Others.SendAsync("LobbyUpdate", (string?)null);
+    }
     /// <summary>P1 sends authoritative game state; server relays to P2.</summary>
     public async Task SendGameState(float ballX, float ballY, float paddle1Y, float paddle2Y, int score1, int score2)
     {
@@ -133,6 +161,9 @@ public class PingPongHub : Hub
 
         if (opponentId != null)
             await Clients.Client(opponentId).SendAsync("OpponentLeft");
+
+        // If P1 was waiting alone, clear the lobby badge for everyone
+        await Clients.All.SendAsync("LobbyUpdate", (string?)null);
 
         await base.OnDisconnectedAsync(exception);
     }

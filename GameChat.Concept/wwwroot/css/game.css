@@ -65,6 +65,19 @@
     letter-spacing: 0.5px;
 }
 
+.pp-waiting-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    background: #1e1e2e;
+    border: 1px solid #313244;
+    font-size: 0.82rem;
+    color: #a6e3a1;
+    letter-spacing: 0.3px;
+}
+
 .pp-players-form {
     display: flex;
     align-items: center;
@@ -159,53 +172,62 @@
 .pp-scoreboard {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 6px;
     width: 100%;
     max-width: 800px;
     background: #181825;
-    border-radius: 10px;
-    padding: 10px 20px;
+    border-radius: 8px;
+    padding: 6px 14px;
     box-sizing: border-box;
 }
 
-.pp-score-side {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+.pp-leave-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    background: transparent;
+    color: #585b70;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    letter-spacing: 0.3px;
 }
 
-.pp-score-side--right {
-    justify-content: flex-end;
+.pp-leave-btn:hover {
+    border-color: #f38ba8;
+    color: #f38ba8;
 }
 
 .pp-player-name {
-    font-size: 0.85rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: #a6adc8;
-    max-width: 140px;
+    max-width: 90px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.pp-score-side:first-child .pp-player-name { color: #89b4fa; }
-.pp-score-side--right     .pp-player-name  { color: #a6e3a1; }
+#pp-name-display1 { color: #89b4fa; }
+#pp-name-display2 { color: #a6e3a1; }
 
 .pp-score {
-    font-size: 2.4rem;
+    font-size: 1.1rem;
     font-weight: 900;
     color: #cdd6f4;
     font-variant-numeric: tabular-nums;
-    min-width: 2ch;
+    min-width: 1.5ch;
     text-align: center;
 }
 
 .pp-score-divider {
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 900;
     color: #45475a;
-    padding: 0 10px;
+    padding: 0 2px;
 }
 
 /* Canvas wrapper */

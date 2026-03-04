@@ -10,22 +10,35 @@
     display: flex;
     flex-direction: column;
     background: #181825;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .chat-panel-header {
-    padding: 8px 14px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    letter-spacing: 0.6px;
-    color: #cba6f7;
+    padding: 10px 14px 8px;
     background: #1e1e2e;
     border-bottom: 1px solid #313244;
     flex-shrink: 0;
-    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chat-panel-header-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    color: #cba6f7;
+    text-transform: uppercase;
+}
+
+.chat-panel-header-sub {
+    display: flex;
+    align-items: center;
+    padding-bottom: 2px;
 }
 
 .chat-name-tag {
@@ -51,6 +64,28 @@
     color: #cba6f7;
 }
 
+.online-count {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #6c7086;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.online-dot {
+    color: #a6e3a1;
+}
+
+.typing-indicator {
+    min-height: 16px;
+    padding: 2px 14px 4px;
+    font-size: 0.72rem;
+    font-style: italic;
+    color: #585b70;
+    flex-shrink: 0;
+}
+
 .chat-container {
     display: flex;
     flex-direction: column;
@@ -73,12 +108,21 @@
 }
 
 #messages::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
+}
+
+#messages::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 #messages::-webkit-scrollbar-thumb {
-    background: #45475a;
+    background: #313244;
     border-radius: 4px;
+    transition: background 0.2s;
+}
+
+#messages::-webkit-scrollbar-thumb:hover {
+    background: #585b70;
 }
 
 .msg {
@@ -92,9 +136,12 @@
 
 .msg .msg-user {
     font-weight: bold;
-    color: #cba6f7;
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     margin-bottom: 3px;
+}
+
+.msg .msg-text {
+    font-size: 0.82rem;
 }
 
 .msg.mine {
@@ -103,7 +150,6 @@
 }
 
 .msg.mine .msg-user {
-    color: #a6e3a1;
 }
 
 /* ---------- History separator ---------- */
@@ -117,12 +163,15 @@
     user-select: none;
 }
 
-/* ---------- Status bar ---------- */
+/* ---------- System message ---------- */
 
-.chat-status {
-    font-size: 0.72rem;
-    padding: 4px 16px 6px;
-    color: #6c7086;
+.msg-system {
+    text-align: center;
+    font-size: 0.7rem;
+    font-style: italic;
+    color: #585b70;
+    padding: 2px 0;
+    user-select: none;
 }
 
 /* ---------- Input area ---------- */

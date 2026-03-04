@@ -55,12 +55,13 @@ function syncModalBtn() {
 }
 
 function confirmName() {
+    const oldName = getUserName();
     const name = modalInput.value.trim();
     if (!name) return;
     setUserName(name);
     closeModal();
     // notify any listener
-    window.dispatchEvent(new CustomEvent('gchat:namechanged', { detail: { name } }));
+    window.dispatchEvent(new CustomEvent('gchat:namechanged', { detail: { name, oldName } }));
 }
 
 modalInput.addEventListener('input', syncModalBtn);

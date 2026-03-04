@@ -28,7 +28,10 @@ export async function initPingPong() {
     const lobbyEl       = document.getElementById('pingpong-lobby');
     const gameEl        = document.getElementById('pingpong-game');
     const joinBtnEl     = document.getElementById('pp-join-btn');
+    const cancelBtnEl   = document.getElementById('pp-cancel-btn');
     const statusEl      = document.getElementById('pp-lobby-status');
+    const waitingBadge  = document.getElementById('pp-waiting-badge');
+    const tabBtn        = document.querySelector('.tab-btn[data-tab="pingpong"]');
 
     const canvas        = document.getElementById('pp-canvas');
     const ctx           = canvas.getContext('2d');
@@ -43,6 +46,7 @@ export async function initPingPong() {
     const winnerEl      = document.getElementById('pp-winner-text');
     const playAgainBtn  = document.getElementById('pp-play-again-btn');
     const backLobbyBtn  = document.getElementById('pp-new-names-btn');
+    const leaveBtnEl    = document.getElementById('pp-leave-btn');
     const controlsHint  = document.getElementById('pp-controls-hint');
 
     // ── SignalR connection ───────────────────────────────────────────────────
@@ -78,6 +82,33 @@ export async function initPingPong() {
 
     connection.on('WaitingForOpponent', () => {
         setStatus('⏳ Aguardando 2º jogador...');
+        joinBtnEl.classList.add('hidden');
+        cancelBtnEl.classList.remove('hidden');
+    });
+
+    connection.on('QueueCancelled', () => {
+        joinBtnEl.classList.remove('hidden');
+        cancelBtnEl.classList.add('hidden');
+        joinBtnEl.disabled = getUserName().length === 0;
+        setStatus('');
+    });
+
+    connection.on('LobbyUpdate', (waitingName) => {
+        if (waitingName) {
+            // someone is waiting — show badge inside lobby and dot on tab
+            if (waitingBadge) {
+                waitingBadge.textContent = `👤 ${waitingName} está no lobby`;
+                waitingBadge.classList.remove('hidden');
+            }
+            if (tabBtn) tabBtn.dataset.notify = 'true';
+        } else {
+            // lobby empty or game started
+            if (waitingBadge) {
+                waitingBadge.textContent = '';
+                waitingBadge.classList.add('hidden');
+            }
+            if (tabBtn) delete tabBtn.dataset.notify;
+        }
     });
 
     connection.on('RoomFull', () => {
@@ -149,6 +180,10 @@ export async function initPingPong() {
 
     joinBtnEl.addEventListener('click', doJoin);
 
+    cancelBtnEl.addEventListener('click', async () => {
+        try { await connection.invoke('CancelQueue'); } catch {}
+    });
+
     // ── Start / restart game ─────────────────────────────────────────────────
     function startGame(name1, name2, slot) {
         mySlot   = slot;
@@ -170,8 +205,8 @@ export async function initPingPong() {
         gameEl.classList.remove('hidden');
 
         controlsHint.textContent = mySlot === 1
-            ? 'Você (esquerda): ↑ / ↓   |   Adversário: direita'
-            : 'Você (direita): ↑ / ↓   |   Adversário: esquerda';
+            ? 'Você (esquerda): ↑ / ↓'
+            : 'Você (direita): ↑ / ↓';
 
         gameRunning = true;
         stopLoop();
@@ -366,6 +401,8 @@ export async function initPingPong() {
         stopLoop();
         gameEl.classList.add('hidden');
         lobbyEl.classList.remove('hidden');
+        joinBtnEl.classList.remove('hidden');
+        cancelBtnEl.classList.add('hidden');
         joinBtnEl.disabled = getUserName().length === 0;
     }
 
@@ -396,6 +433,19 @@ export async function initPingPong() {
         setStatus('');
         mySlot = 0;
         // Disconnect so server clears the room (peer gets OpponentLeft)
+        try { await connection.stop(); } catch {}
+        await connection.start().catch(() => {});
+        joinBtnEl.disabled = getUserName().length === 0;
+    });
+
+    leaveBtnEl.addEventListener('click', async () => {
+        if (!confirm('Tem certeza que quer sair da partida?')) return;
+        stopLoop();
+        gameRunning = false;
+        resultEl.classList.add('hidden');
+        goToLobby();
+        setStatus('');
+        mySlot = 0;
         try { await connection.stop(); } catch {}
         await connection.start().catch(() => {});
         joinBtnEl.disabled = getUserName().length === 0;
