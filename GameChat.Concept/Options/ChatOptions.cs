@@ -5,5 +5,5 @@ public sealed class ChatOptions
     public const string Section = "Chat";
 
     /// <summary>Maximum number of messages kept in the in-memory history.</summary>
-    public int HistorySize { get; init; } = 50;
+    public int HistorySize { get; init; }
 }

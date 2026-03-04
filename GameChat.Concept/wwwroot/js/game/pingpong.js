@@ -10,14 +10,20 @@
 
 import { getUserName } from '../user.js';
 
-const W = 800, H = 500;
-const PADDLE_W = 14, PADDLE_H = 80, PADDLE_SPEED = 2;
-const BALL_R = 8;
-const BALL_SPEED     = 1;   // velocidade inicial da bola (px/frame)
-const BALL_SPEED_MAX = 3;  // velocidade máxima da bola
-const WIN_SCORE = 10;
+export async function initPingPong() {
+    // ── Load config from server ──────────────────────────────────────────────
+    const { pingPong: cfg } = await fetch('/api/config').then(r => r.json());
 
-export function initPingPong() {
+    const W              = cfg.canvasWidth;
+    const H              = cfg.canvasHeight;
+    const PADDLE_W       = cfg.paddleWidth;
+    const PADDLE_H       = cfg.paddleHeight;
+    const PADDLE_SPEED   = cfg.paddleSpeed;
+    const BALL_R         = cfg.ballRadius;
+    const BALL_SPEED     = cfg.ballInitialSpeed;
+    const BALL_SPEED_MAX = cfg.ballMaxSpeed;
+    const WIN_SCORE      = cfg.winScore;
+
     // ── DOM ──────────────────────────────────────────────────────────────────
     const lobbyEl       = document.getElementById('pingpong-lobby');
     const gameEl        = document.getElementById('pingpong-game');
