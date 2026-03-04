@@ -112,7 +112,6 @@ export function initChat() {
     }
 
     // ── Connection state ───────────────────────────────────────────────────────
-
     connection.onreconnecting(() => { sendBtn.disabled = true; });
     connection.onreconnected(()  => { sendBtn.disabled = false; });
     connection.onclose(()        => { sendBtn.disabled = true; });
@@ -122,7 +121,6 @@ export function initChat() {
         .catch(err => console.error('Falha ao conectar: ' + err));
 
     // ── Send ───────────────────────────────────────────────────────────────────
-
     async function send() {
         const message = messageInput.value.trim();
         if (!message || sendBtn.disabled) return;
@@ -136,7 +134,6 @@ export function initChat() {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
 const USER_COLORS = [
     '#cba6f7', // mauve
     '#89b4fa', // blue

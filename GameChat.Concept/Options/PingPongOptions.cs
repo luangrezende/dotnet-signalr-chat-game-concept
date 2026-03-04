@@ -4,14 +4,17 @@ public sealed class PingPongOptions
 {
     public const string Section = "PingPong";
 
-    public int   CanvasWidth      { get; init; }
-    public int   CanvasHeight     { get; init; }
-    public int   PaddleWidth      { get; init; }
-    public int   PaddleHeight     { get; init; }
-    public float PaddleSpeed      { get; init; }
-    public int   BallRadius       { get; init; }
-    public float BallInitialSpeed  { get; init; }
-    public float BallMaxSpeed      { get; init; }
-    public float BallAcceleration  { get; init; }
-    public int   WinScore          { get; init; }
+    public int   CanvasWidth           { get; init; }
+    public int   CanvasHeight          { get; init; }
+    public int   PaddleWidth           { get; init; }
+    public int   PaddleHeight          { get; init; }
+    public int   PaddleOffset          { get; init; }
+    public float PaddleSpeed           { get; init; }
+    public int   BallRadius            { get; init; }
+    public float BallInitialSpeed      { get; init; }
+    public float BallMaxSpeed          { get; init; }
+    public float BallAcceleration      { get; init; }
+    public int   WinScore              { get; init; }
+    public int   CountdownSeconds      { get; init; }
+    public int   QueuePromotionDelayMs { get; init; }
 }

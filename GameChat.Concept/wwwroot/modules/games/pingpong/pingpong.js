@@ -1,84 +1,90 @@
-﻿// ─── PingPong Module ──────────────────────────────────────────────────────────
+﻿// --- PingPong Module ---------------------------------------------------------
 
 import { getUserName } from '../../../js/user.js';
 
 export const meta = {
     id:       'pingpong',
-    label:    '🏓 Ping Pong',
+    label:    ' Ping Pong',
     cssPath:  '/modules/games/pingpong/pingpong.css',
     htmlPath: '/modules/games/pingpong/pingpong.html',
 };
 
 export async function init() {
-    // ── Config from appsettings via /api/config ─────────────────────────────
+    // -- Config from appsettings via /api/config ------------------------------
     const cfg = await fetch('/api/config').then(r => r.json()).then(d => d.pingPong);
 
-    // ── SignalR connection ───────────────────────────────────────────────────
+    // -- SignalR connection ---------------------------------------------------
     const connection = new signalR.HubConnectionBuilder()
         .withUrl('/pingponghub')
         .withAutomaticReconnect()
         .build();
 
-    // ── DOM refs ────────────────────────────────────────────────────────────
-    const lobbyEl         = document.getElementById('pingpong-lobby');
-    const gameEl          = document.getElementById('pingpong-game');
-    const resultEl        = document.getElementById('pingpong-result');
-    const canvas          = document.getElementById('pp-canvas');
-    const ctx             = canvas.getContext('2d');
+    // -- DOM refs -------------------------------------------------------------
+    const lobbyEl       = document.getElementById('pingpong-lobby');
+    const gameEl        = document.getElementById('pingpong-game');
+    const resultEl      = document.getElementById('pingpong-result');
+    const canvas        = document.getElementById('pp-canvas');
+    const ctx           = canvas.getContext('2d');
 
-    const joinBtnEl       = document.getElementById('pp-join-btn');
-    const cancelBtnEl     = document.getElementById('pp-cancel-btn');
-    const leaveBtnEl      = document.getElementById('pp-leave-btn');
-    const playAgainBtnEl  = document.getElementById('pp-play-again-btn');
-    const newNamesBtnEl   = document.getElementById('pp-new-names-btn');
+    const joinBtnEl     = document.getElementById('pp-join-btn');
+    const joinFormEl    = document.getElementById('pp-join-form');
+    const cancelBtnEl   = document.getElementById('pp-cancel-btn');
+    const leaveBtnEl    = document.getElementById('pp-leave-btn');
+    const newNamesBtnEl = document.getElementById('pp-new-names-btn');
 
-    const lobbyStatusEl   = document.getElementById('pp-lobby-status');
-    const gameStatusEl    = document.getElementById('pp-game-status');
-    const waitingBadgeEl  = document.getElementById('pp-waiting-badge');
-    const spectatorCountEl= document.getElementById('pp-spectator-count');
-    const spectatorBadgeEl= document.getElementById('pp-spectator-badge');
-    const winnerTextEl    = document.getElementById('pp-winner-text');
-    const resultSubEl     = document.getElementById('pp-result-sub');
-    const controlsHintEl  = document.getElementById('pp-controls-hint');
-    const score1El        = document.getElementById('pp-score1');
-    const score2El        = document.getElementById('pp-score2');
-    const name1El         = document.getElementById('pp-name-display1');
-    const name2El         = document.getElementById('pp-name-display2');
+    const lobbyStatusEl  = document.getElementById('pp-lobby-status');
+    const gameStatusEl   = document.getElementById('pp-game-status');
+    const waitingBadgeEl = document.getElementById('pp-waiting-badge');
+    const winnerTextEl   = document.getElementById('pp-winner-text');
+    const controlsHintEl = document.getElementById('pp-controls-hint');
+    const score1El       = document.getElementById('pp-score1');
+    const score2El       = document.getElementById('pp-score2');
+    const name1El        = document.getElementById('pp-name-display1');
+    const name2El        = document.getElementById('pp-name-display2');
 
-    // ── Game constants (from appsettings via /api/config) ──────────────────
-    const W           = cfg.canvasWidth;
-    const H           = cfg.canvasHeight;
-    const PADDLE_W    = cfg.paddleWidth;
-    const PADDLE_H    = cfg.paddleHeight;
-    const PADDLE_SPD  = cfg.paddleSpeed;
-    const BALL_R      = cfg.ballRadius;
-    const WIN_SCORE   = cfg.winScore;
-    const BALL_SPD0   = cfg.ballInitialSpeed;
-    const BALL_SPD_MAX= cfg.ballMaxSpeed;
-    const BALL_ACCEL  = cfg.ballAcceleration;
+    const lobbyActionsEl    = document.getElementById('pp-lobby-actions');
+    const lobbyQueueBtnEl   = document.getElementById('pp-lobby-queue-btn');
+    const lobbyCountsEl     = document.getElementById('pp-lobby-counts');
+    const lobbyQueueCountEl = document.getElementById('pp-lobby-queue-count');
+
+    // -- Game constants -------------------------------------------------------
+    const W            = cfg.canvasWidth;
+    const H            = cfg.canvasHeight;
+    const PADDLE_W     = cfg.paddleWidth;
+    const PADDLE_H     = cfg.paddleHeight;
+    const PADDLE_OFF   = cfg.paddleOffset;
+    const PADDLE_SPD   = cfg.paddleSpeed;
+    const BALL_R       = cfg.ballRadius;
+    const WIN_SCORE    = cfg.winScore;
+    const BALL_SPD0    = cfg.ballInitialSpeed;
+    const BALL_SPD_MAX = cfg.ballMaxSpeed;
+    const BALL_ACCEL   = cfg.ballAcceleration;
 
     canvas.width  = W;
     canvas.height = H;
 
-    // ── State ────────────────────────────────────────────────────────────────
-    let mySlot       = 0;   // 0=none 1=P1(host) 2=P2(client) 3=spectator
-    let myName       = '';
-    let p1Name       = 'Jogador 1';
-    let p2Name       = 'Jogador 2';
-    let score1       = 0;
-    let score2       = 0;
-    let animId       = null;
+    // -- State ----------------------------------------------------------------
+    let mySlot          = 0;   // 0=lobby 1=P1 2=P2 3=in-queue
+    let myName          = '';
+    let p1Name          = 'Jogador 1';
+    let p2Name          = 'Jogador 2';
+    let score1          = 0;
+    let score2          = 0;
+    let animId          = null;
     let countdownActive = false;
-
-    // Ball + paddles (authoritative on P1, received by P2 & spectators)
     let bx = W / 2, by = H / 2, vx = BALL_SPD0, vy = 2;
     let paddle1Y = H / 2 - PADDLE_H / 2;
     let paddle2Y = H / 2 - PADDLE_H / 2;
     let keys = {};
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    function show(el)  { el.classList.remove('hidden'); }
-    function hide(el)  { el.classList.add('hidden'); }
+    // -- Helpers --------------------------------------------------------------
+    function show(el) { el.classList.remove('hidden'); }
+    function hide(el) { el.classList.add('hidden'); }
+
+    function setTabNotify(active) {
+        const btn = document.querySelector('.game-tabs .tab-btn[data-tab="pingpong"]');
+        if (btn) btn.dataset.notify = active ? 'true' : 'false';
+    }
 
     function resetBall(dir = 1) {
         bx = W / 2; by = H / 2;
@@ -94,53 +100,71 @@ export async function init() {
         show(lobbyEl);
         lobbyStatusEl.textContent = '';
         controlsHintEl.textContent = '';
+        cancelBtnEl.textContent = 'Cancelar';
+        cancelBtnEl.classList.add('hidden');
+        joinBtnEl.disabled = false;
+        hide(lobbyActionsEl);
+        hide(lobbyCountsEl);
+        show(joinFormEl);
         mySlot = 0;
     }
 
-    function updateSpectatorBadge() {
-        if (mySlot === 3) {
-            spectatorBadgeEl.textContent = '👁 Espectador';
-            show(spectatorBadgeEl);
-        } else {
-            hide(spectatorBadgeEl);
-        }
+    function showLobbyInQueue(position) {
+        stopGameLoop();
+        hide(gameEl);
+        hide(resultEl);
+        show(lobbyEl);
+        hide(joinFormEl);
+        hide(lobbyActionsEl);
+        cancelBtnEl.textContent = 'Sair da fila';
+        show(cancelBtnEl);
+        lobbyStatusEl.textContent = position === 1
+            ? ' Você é o próximo a jogar!'
+            : ` Posição ${position} na fila`;
     }
 
-    // ── Lobby UI ─────────────────────────────────────────────────────────────
+    // -- Lobby UI -------------------------------------------------------------
     function enableJoin(name) {
-        if (name && name.trim().length > 0) {
-            joinBtnEl.disabled = false;
-        }
+        if (name && name.trim().length > 0) joinBtnEl.disabled = false;
     }
 
-    // Enable join button if user already has a name set
     enableJoin(getUserName());
-    // Also re-enable if name is set later (e.g. after name modal)
     window.addEventListener('gchat:namechanged', () => enableJoin(getUserName()));
 
     joinBtnEl.addEventListener('click', () => {
-        const name = getUserName();
-        myName = name;
-        connection.invoke('JoinGame', name).catch(console.error);
+        myName = getUserName();
+        connection.invoke('JoinGame', myName).catch(console.error);
         joinBtnEl.disabled = true;
-        cancelBtnEl.classList.remove('hidden');
+        cancelBtnEl.textContent = 'Cancelar';
+        show(cancelBtnEl);
         lobbyStatusEl.textContent = 'Entrando na sala...';
     });
 
     cancelBtnEl.addEventListener('click', () => {
-        connection.invoke('CancelQueue').catch(console.error);
-        cancelBtnEl.classList.add('hidden');
-        joinBtnEl.disabled = false;
-        lobbyStatusEl.textContent = '';
+        if (mySlot === 3) {
+            connection.invoke('LeaveQueue').catch(console.error);
+        } else {
+            connection.invoke('CancelQueue').catch(console.error);
+            hide(cancelBtnEl);
+            joinBtnEl.disabled = false;
+            lobbyStatusEl.textContent = '';
+        }
     });
 
-    // ── LobbyUpdate ─────────────────────────────────────────────────────────
+    lobbyQueueBtnEl.addEventListener('click', () => {
+        myName = getUserName();
+        connection.invoke('JoinGame', myName).catch(console.error);
+    });
+
+    // -- LobbyUpdate ----------------------------------------------------------
     connection.on('LobbyUpdate', (waitingName) => {
         if (waitingName) {
-            waitingBadgeEl.textContent = `👤 ${waitingName} está aguardando...`;
+            waitingBadgeEl.textContent = ` ${waitingName} está aguardando...`;
             show(waitingBadgeEl);
+            setTabNotify(true);
         } else {
             hide(waitingBadgeEl);
+            if (gameStatusEl.classList.contains('hidden')) setTabNotify(false);
         }
     });
 
@@ -149,117 +173,136 @@ export async function init() {
     });
 
     connection.on('QueueCancelled', () => {
-        lobbyStatusEl.textContent = '';
-        cancelBtnEl.classList.add('hidden');
+        hide(cancelBtnEl);
         joinBtnEl.disabled = false;
+        lobbyStatusEl.textContent = '';
+        setTabNotify(false);
     });
 
-    // ── GameStatusUpdate ─────────────────────────────────────────────────────
+    // -- GameStatusUpdate -----------------------------------------------------
     connection.on('GameStatusUpdate', (name1, name2) => {
-        if (name1 && name2) {
-            gameStatusEl.textContent = `🎮 ${name1} vs ${name2} em jogo`;
+        const gameActive = !!(name1 && name2);
+        if (gameActive) {
+            gameStatusEl.textContent = ` ${name1} vs ${name2} em jogo`;
             show(gameStatusEl);
+            setTabNotify(true);
+            if (mySlot === 0) {
+                hide(joinFormEl);
+                show(lobbyActionsEl);
+                show(lobbyCountsEl);
+            }
         } else {
             hide(gameStatusEl);
+            hide(lobbyActionsEl);
+            hide(lobbyCountsEl);
+            setTabNotify(false);
+            if (mySlot === 0) show(joinFormEl);
         }
     });
 
-    // ── SpectatorCountUpdate ─────────────────────────────────────────────────
-    connection.on('SpectatorCountUpdate', (count) => {
-        if (count > 0) {
-            spectatorCountEl.textContent = `👁 ${count} espectador${count === 1 ? '' : 'es'} na fila`;
-            show(spectatorCountEl);
-        } else {
-            hide(spectatorCountEl);
-        }
+    // -- QueueCountUpdate -----------------------------------------------------
+    connection.on('QueueCountUpdate', (count) => {
+        lobbyQueueCountEl.textContent = count === 1 ? ' 1 na fila' : ` ${count} na fila`;
+        if (count > 0) setTabNotify(true);
     });
 
-    // ── WaitingForRematch ────────────────────────────────────────────────────
-    connection.on('WaitingForRematch', () => {
-        resultSubEl.textContent = 'Aguardando oponente aceitar revanche...';
-        show(resultSubEl);
-    });
-
-    // ── JoinedAsSpectator ────────────────────────────────────────────────────
-    connection.on('JoinedAsSpectator', (position, name1, name2) => {
+    // -- JoinedQueue ----------------------------------------------------------
+    connection.on('JoinedQueue', (position) => {
         mySlot = 3;
-        p1Name = name1 || 'Jogador 1';
-        p2Name = name2 || 'Jogador 2';
-        hide(lobbyEl);
-        show(gameEl);
-        hide(resultEl);
-        updateSpectatorBadge();
-        controlsHintEl.textContent = '👁 Modo espectador — aguardando sua vez na fila';
-        name1El.textContent = p1Name;
-        name2El.textContent = p2Name;
-        score1El.textContent = '0';
-        score2El.textContent = '0';
-        score1 = 0; score2 = 0;
-        cancelBtnEl.classList.add('hidden');
-        drawIdle();
+        showLobbyInQueue(position);
     });
 
-    // ── SpectatorPositionUpdate ──────────────────────────────────────────────
-    connection.on('SpectatorPositionUpdate', (position) => {
+    // -- QueuePositionUpdate --------------------------------------------------
+    connection.on('QueuePositionUpdate', (position) => {
         if (mySlot === 3) {
-            controlsHintEl.textContent = `👁 Espectador — posição na fila: ${position}`;
+            lobbyStatusEl.textContent = position === 1
+                ? ' Você é o próximo a jogar!'
+                : ` Posição ${position} na fila`;
         }
     });
 
-    // ── SpectatorTookYourSpot ────────────────────────────────────────────────
-    connection.on('SpectatorTookYourSpot', (specName) => {
-        // This player lost and a spectator took their slot — they become spectator
-        mySlot = 3;
-        resultSubEl.textContent = `👤 ${specName} entrou no jogo no seu lugar`;
-        show(resultSubEl);
-        hide(playAgainBtnEl);
-        updateSpectatorBadge();
-    });
-
-    // ── SpectatorLeft ────────────────────────────────────────────────────────
-    connection.on('SpectatorLeft', () => {
+    // -- LeftQueue ------------------------------------------------------------
+    connection.on('LeftQueue', () => {
         showLobby();
     });
 
-    // ── RoomReset ────────────────────────────────────────────────────────────
+    // -- ReturnToLobby (loser displaced by queue promotion) -------------------
+    connection.on('ReturnToLobby', () => {
+        showLobby();
+        lobbyStatusEl.textContent = 'Você perdeu! Volte para a fila.';
+    });
+
+    // -- RoomReset ------------------------------------------------------------
     connection.on('RoomReset', () => {
+        const wasActive = mySlot !== 0;
         showLobby();
-        lobbyStatusEl.textContent = 'A sala foi encerrada. Entre novamente.';
-        joinBtnEl.disabled = false;
-        cancelBtnEl.classList.add('hidden');
+        setTabNotify(false);
+        if (wasActive) lobbyStatusEl.textContent = 'A sala foi encerrada.';
     });
 
-    // ── OpponentLeft ─────────────────────────────────────────────────────────
-    connection.on('OpponentLeft', () => {
+    // -- OpponentLeft ---------------------------------------------------------
+    connection.on('OpponentLeft', (leaverName) => {
         stopGameLoop();
-        showLobby();
-        lobbyStatusEl.textContent = 'O oponente saiu da partida.';
-        joinBtnEl.disabled = false;
-        cancelBtnEl.classList.add('hidden');
+        const msg = leaverName ? `${leaverName} saiu da partida...` : 'Oponente saiu...';
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#1e1e2e';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#6c7086';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '18px sans-serif';
+        ctx.fillText(msg, W / 2, H / 2);
     });
 
-    // ── StartCountdown ───────────────────────────────────────────────────────
+    // -- StartCountdown -------------------------------------------------------
     connection.on('StartCountdown', (name1, name2, slot, seconds) => {
-        mySlot  = slot;
-        p1Name  = name1;
-        p2Name  = name2;
-        score1  = 0; score2 = 0;
+        mySlot = slot;
+        p1Name = name1; p2Name = name2;
+        score1 = 0; score2 = 0;
         enterGameScreen(name1, name2);
         runCountdown(seconds);
     });
 
-    // ── SpectatorGameStart ───────────────────────────────────────────────────
-    connection.on('SpectatorGameStart', (name1, name2) => {
-        p1Name = name1; p2Name = name2;
-        name1El.textContent = p1Name;
-        name2El.textContent = p2Name;
-        score1El.textContent = '0';
-        score2El.textContent = '0';
-        score1 = 0; score2 = 0;
-        hide(resultEl);
+    // -- Game Over ------------------------------------------------------------
+    connection.on('ReceiveGameOver', (winnerName) => {
+        stopGameLoop();
+        const isWinner = winnerName === myName;
+        winnerTextEl.textContent = isWinner ? ' Você venceu!' : ' Você perdeu...';
+        show(resultEl);
+        show(newNamesBtnEl);
     });
 
-    // ── enterGameScreen ───────────────────────────────────────────────────────
+    // -- Receive state (P2) ---------------------------------------------------
+    connection.on('ReceiveGameState', (rbx, rby, rp1y, rp2y, rs1, rs2) => {
+        if (mySlot !== 2) return;
+        bx = rbx; by = rby;
+        paddle1Y = rp1y;
+        score1 = rs1; score2 = rs2;
+        score1El.textContent = String(score1);
+        score2El.textContent = String(score2);
+    });
+
+    connection.on('ReceivePaddleMove', (y) => {
+        if (mySlot === 1) paddle2Y = y;
+    });
+
+    // -- Leave button ---------------------------------------------------------
+    leaveBtnEl.addEventListener('click', () => {
+        if (confirm('Sair da partida?')) {
+            connection.invoke('LeaveGame').catch(console.error);
+            showLobby();
+        }
+    });
+
+    // -- Result: back to lobby -------------------------------------------------
+    newNamesBtnEl.addEventListener('click', () => {
+        if (mySlot === 1 || mySlot === 2) {
+            connection.invoke('LeaveGame').catch(console.error);
+        }
+        showLobby();
+    });
+
+    // -- enterGameScreen ------------------------------------------------------
     function enterGameScreen(name1, name2) {
         hide(lobbyEl);
         show(gameEl);
@@ -268,35 +311,23 @@ export async function init() {
         name2El.textContent  = name2;
         score1El.textContent = '0';
         score2El.textContent = '0';
-        cancelBtnEl.classList.add('hidden');
-        updateSpectatorBadge();
-
-        if (mySlot === 1) {
-            controlsHintEl.textContent = 'W / S ou ↑ / ↓ para mover';
-        } else if (mySlot === 2) {
-            controlsHintEl.textContent = 'W / S ou ↑ / ↓ para mover';
-        } else {
-            controlsHintEl.textContent = '👁 Modo espectador — aguardando sua vez na fila';
-        }
+        hide(cancelBtnEl);
+        controlsHintEl.textContent = 'Use setas ↑/↓ para mover';
     }
 
-    // ── Countdown ────────────────────────────────────────────────────────────
+    // -- Countdown ------------------------------------------------------------
     function runCountdown(seconds) {
         countdownActive = true;
         stopGameLoop();
         resetBall(1);
         paddle1Y = H / 2 - PADDLE_H / 2;
         paddle2Y = H / 2 - PADDLE_H / 2;
-        drawFrame(); // draw idle state
+        drawFrame();
 
         let count = seconds;
         function tick() {
             renderCountdown(count);
-            if (count <= 0) {
-                countdownActive = false;
-                startGameLoop();
-                return;
-            }
+            if (count <= 0) { countdownActive = false; startGameLoop(); return; }
             count--;
             setTimeout(tick, 1000);
         }
@@ -322,192 +353,96 @@ export async function init() {
         ctx.restore();
     }
 
-    // ── Leave button ──────────────────────────────────────────────────────────
-    leaveBtnEl.addEventListener('click', () => {
-        if (mySlot === 3) {
-            connection.invoke('LeaveSpectator').catch(console.error);
-        } else {
-            if (confirm('Sair da partida?')) {
-                stopGameLoop();
-                showLobby();
-                // Connection stays alive; server handles via OnDisconnectedAsync on true disconnect
-                // or we can just navigate away — for now just reset local state
-                mySlot = 0;
-            }
-        }
-    });
-
-    // ── Play again / back to lobby ────────────────────────────────────────────
-    playAgainBtnEl.addEventListener('click', () => {
-        if (mySlot === 3) return; // spectators can't request rematch
-        connection.invoke('RequestRematch').catch(console.error);
-        playAgainBtnEl.disabled = true;
-        resultSubEl.textContent = 'Aguardando oponente aceitar revanche...';
-        show(resultSubEl);
-    });
-
-    newNamesBtnEl.addEventListener('click', () => {
-        showLobby();
-        mySlot = 0;
-    });
-
-    // ── Game Over ─────────────────────────────────────────────────────────────
-    connection.on('ReceiveGameOver', (winnerName) => {
-        stopGameLoop();
-        showResult(winnerName);
-        if (mySlot === 1 || mySlot === 2) {
-            const isWinner = winnerName === myName;
-            winnerTextEl.textContent = isWinner ? '🏆 Você venceu!' : '💔 Você perdeu...';
-            resultSubEl.textContent  = isWinner
-                ? `${winnerName} venceu a partida!`
-                : `${winnerName} venceu a partida.`;
-            show(resultSubEl);
-        }
-    });
-
-    function showResult(winnerName) {
-        winnerTextEl.textContent = `🏆 ${winnerName} venceu!`;
-        show(resultEl);
-        if (mySlot === 3) {
-            playAgainBtnEl.disabled = true;
-        } else {
-            playAgainBtnEl.disabled = false;
-        }
-        hide(resultSubEl);
-        resultSubEl.textContent = '';
-    }
-
-    // ── Receive state (P2 + spectators) ──────────────────────────────────────
-    connection.on('ReceiveGameState', (rbx, rby, rp1y, rp2y, rs1, rs2) => {
-        if (mySlot === 2 || mySlot === 3) {
-            bx = rbx; by = rby;
-            paddle1Y = rp1y; paddle2Y = rp2y;
-            score1 = rs1; score2 = rs2;
-            score1El.textContent = String(score1);
-            score2El.textContent = String(score2);
-        }
-    });
-
-    // P1 receives P2 paddle
-    connection.on('ReceivePaddleMove', (y) => {
-        if (mySlot === 1) paddle2Y = y;
-    });
-
-    // ── Input ─────────────────────────────────────────────────────────────────
+    // -- Input ----------------------------------------------------------------
     document.addEventListener('keydown', e => { keys[e.key] = true; });
     document.addEventListener('keyup',   e => { keys[e.key] = false; });
 
-    function movePaddles(dt) {
-        const spd = PADDLE_SPD;
+    function movePaddles() {
         if (mySlot === 1) {
-            if (keys['w'] || keys['W'] || keys['ArrowUp'])   paddle1Y = Math.max(0, paddle1Y - spd);
-            if (keys['s'] || keys['S'] || keys['ArrowDown']) paddle1Y = Math.min(H - PADDLE_H, paddle1Y + spd);
+            if (keys['ArrowUp'])   paddle1Y = Math.max(0, paddle1Y - PADDLE_SPD);
+            if (keys['ArrowDown']) paddle1Y = Math.min(H - PADDLE_H, paddle1Y + PADDLE_SPD);
         } else if (mySlot === 2) {
-            if (keys['w'] || keys['W'] || keys['ArrowUp'])   paddle2Y = Math.max(0, paddle2Y - spd);
-            if (keys['s'] || keys['S'] || keys['ArrowDown']) paddle2Y = Math.min(H - PADDLE_H, paddle2Y + spd);
+            if (keys['ArrowUp'])   paddle2Y = Math.max(0, paddle2Y - PADDLE_SPD);
+            if (keys['ArrowDown']) paddle2Y = Math.min(H - PADDLE_H, paddle2Y + PADDLE_SPD);
             connection.invoke('SendPaddleMove', paddle2Y).catch(() => {});
         }
     }
 
-    // ── Physics (P1 only) ─────────────────────────────────────────────────────
+    // -- Physics (P1 only) ----------------------------------------------------
     function updatePhysics() {
         if (mySlot !== 1 || countdownActive) return;
 
         bx += vx; by += vy;
 
-        // Top / bottom walls
-        if (by - BALL_R < 0)  { by = BALL_R;      vy = -vy; }
-        if (by + BALL_R > H)  { by = H - BALL_R;  vy = -vy; }
+        if (by - BALL_R < 0) { by = BALL_R;     vy = -vy; }
+        if (by + BALL_R > H) { by = H - BALL_R; vy = -vy; }
 
-        // Left paddle (P1)
-        if (vx < 0 && bx - BALL_R <= PADDLE_W + 10 && bx - BALL_R > 0 &&
+        if (vx < 0 && bx - BALL_R <= PADDLE_W + PADDLE_OFF && bx - BALL_R > 0 &&
             by >= paddle1Y && by <= paddle1Y + PADDLE_H) {
-            bx = PADDLE_W + 10 + BALL_R;
+            bx = PADDLE_W + PADDLE_OFF + BALL_R;
             bouncePaddle(by, paddle1Y, 1);
         }
 
-        // Right paddle (P2)
-        if (vx > 0 && bx + BALL_R >= W - PADDLE_W - 10 && bx + BALL_R < W &&
+        if (vx > 0 && bx + BALL_R >= W - PADDLE_W - PADDLE_OFF && bx + BALL_R < W &&
             by >= paddle2Y && by <= paddle2Y + PADDLE_H) {
-            bx = W - PADDLE_W - 10 - BALL_R;
+            bx = W - PADDLE_W - PADDLE_OFF - BALL_R;
             bouncePaddle(by, paddle2Y, -1);
         }
 
-        // Score: left wall
         if (bx - BALL_R < 0) {
             score2++;
             score2El.textContent = String(score2);
-            if (score2 >= WIN_SCORE) {
-                connection.invoke('GameOver', p2Name).catch(console.error);
-                return;
-            }
+            if (score2 >= WIN_SCORE) { connection.invoke('GameOver', p2Name).catch(console.error); return; }
             resetBall(-1);
         }
 
-        // Score: right wall
         if (bx + BALL_R > W) {
             score1++;
             score1El.textContent = String(score1);
-            if (score1 >= WIN_SCORE) {
-                connection.invoke('GameOver', p1Name).catch(console.error);
-                return;
-            }
+            if (score1 >= WIN_SCORE) { connection.invoke('GameOver', p1Name).catch(console.error); return; }
             resetBall(1);
         }
 
-        // Broadcast state
         connection.invoke('SendGameState', bx, by, paddle1Y, paddle2Y, score1, score2).catch(() => {});
     }
 
     function bouncePaddle(ballY, paddleY, dirMult) {
-        const hitPos  = (ballY - (paddleY + PADDLE_H / 2)) / (PADDLE_H / 2); // [-1, 1]
-        const angle   = hitPos * (Math.PI / 4); // ±45°
-        const spd     = Math.min(Math.sqrt(vx * vx + vy * vy) * BALL_ACCEL, BALL_SPD_MAX);
+        const hitPos = (ballY - (paddleY + PADDLE_H / 2)) / (PADDLE_H / 2);
+        const angle  = hitPos * (Math.PI / 4);
+        const spd    = Math.min(Math.sqrt(vx * vx + vy * vy) * BALL_ACCEL, BALL_SPD_MAX);
         vx = dirMult * spd * Math.cos(angle);
         vy = spd * Math.sin(angle);
     }
 
-    // ── Draw ──────────────────────────────────────────────────────────────────
+    // -- Draw -----------------------------------------------------------------
     function drawFrame() {
         ctx.clearRect(0, 0, W, H);
-
-        // Background
         ctx.fillStyle = '#1e1e2e';
         ctx.fillRect(0, 0, W, H);
 
-        // Center line
         ctx.setLineDash([10, 10]);
         ctx.strokeStyle = '#313244';
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
         ctx.setLineDash([]);
 
-        // Paddles
         ctx.fillStyle = mySlot === 1 ? '#89b4fa' : '#cdd6f4';
-        ctx.fillRect(10, paddle1Y, PADDLE_W, PADDLE_H);
+        ctx.fillRect(PADDLE_OFF, paddle1Y, PADDLE_W, PADDLE_H);
 
         ctx.fillStyle = mySlot === 2 ? '#89b4fa' : '#cdd6f4';
-        ctx.fillRect(W - PADDLE_W - 10, paddle2Y, PADDLE_W, PADDLE_H);
+        ctx.fillRect(W - PADDLE_W - PADDLE_OFF, paddle2Y, PADDLE_W, PADDLE_H);
 
-        // Ball
         ctx.fillStyle = '#f38ba8';
         ctx.beginPath();
         ctx.arc(bx, by, BALL_R, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    function drawIdle() {
-        bx = W / 2; by = H / 2;
-        paddle1Y = H / 2 - PADDLE_H / 2;
-        paddle2Y = H / 2 - PADDLE_H / 2;
-        drawFrame();
-    }
-
-    // ── Game loop ─────────────────────────────────────────────────────────────
+    // -- Game loop ------------------------------------------------------------
     function startGameLoop() {
         stopGameLoop();
         function loop() {
-            if (mySlot === 0) return;
+            if (mySlot === 0 || mySlot === 3) return;
             movePaddles();
             updatePhysics();
             drawFrame();
@@ -517,15 +452,9 @@ export async function init() {
     }
 
     function stopGameLoop() {
-        if (animId !== null) {
-            cancelAnimationFrame(animId);
-            animId = null;
-        }
+        if (animId !== null) { cancelAnimationFrame(animId); animId = null; }
     }
 
-    // ── Initial draw ─────────────────────────────────────────────────────────
-    // Canvas is hidden initially; drawn when entering game screen
-
-    // ── Start connection ─────────────────────────────────────────────────────
+    // -- Start connection -----------------------------------------------------
     connection.start().catch(err => console.error('PingPong SignalR:', err));
 }
