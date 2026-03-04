@@ -107,23 +107,10 @@
     scrollbar-color: #45475a transparent;
 }
 
-#messages::-webkit-scrollbar {
-    width: 4px;
-}
-
-#messages::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#messages::-webkit-scrollbar-thumb {
-    background: #313244;
-    border-radius: 4px;
-    transition: background 0.2s;
-}
-
-#messages::-webkit-scrollbar-thumb:hover {
-    background: #585b70;
-}
+#messages::-webkit-scrollbar       { width: 4px; }
+#messages::-webkit-scrollbar-track { background: transparent; }
+#messages::-webkit-scrollbar-thumb { background: #313244; border-radius: 4px; }
+#messages::-webkit-scrollbar-thumb:hover { background: #585b70; }
 
 .msg {
     background: #313244;
@@ -147,9 +134,6 @@
 .msg.mine {
     align-self: flex-end;
     background: #45475a;
-}
-
-.msg.mine .msg-user {
 }
 
 /* ---------- History separator ---------- */
@@ -199,12 +183,6 @@
     color: #6c7086;
 }
 
-.name-input {
-    max-width: 80px !important;
-    flex: 0 0 80px !important;
-    font-size: 0.82rem !important;
-}
-
 .input-area button {
     padding: 10px 14px;
     border: none;
@@ -219,12 +197,5 @@
     flex-shrink: 0;
 }
 
-.input-area button:hover {
-    background: #b4befe;
-}
-
-.input-area button:disabled {
-    background: #585b70;
-    color: #6c7086;
-    cursor: default;
-}
+.input-area button:hover    { background: #b4befe; }
+.input-area button:disabled { background: #585b70; color: #6c7086; cursor: default; }

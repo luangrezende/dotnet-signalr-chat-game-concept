@@ -10,7 +10,8 @@ public sealed class PingPongOptions
     public int   PaddleHeight     { get; init; }
     public float PaddleSpeed      { get; init; }
     public int   BallRadius       { get; init; }
-    public float BallInitialSpeed { get; init; }
-    public float BallMaxSpeed     { get; init; }
-    public int   WinScore         { get; init; }
+    public float BallInitialSpeed  { get; init; }
+    public float BallMaxSpeed      { get; init; }
+    public float BallAcceleration  { get; init; }
+    public int   WinScore          { get; init; }
 }

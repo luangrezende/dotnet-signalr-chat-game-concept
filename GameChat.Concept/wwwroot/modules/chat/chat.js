@@ -2,7 +2,7 @@
 // chat.js — chat module (SignalR)
 // ============================================
 
-import { getUserName } from '../user.js';
+import { getUserName } from '../../js/user.js';
 
 export function initChat() {
     const messagesEl = document.getElementById('messages');
@@ -32,14 +32,12 @@ export function initChat() {
         .withAutomaticReconnect()
         .build();
 
-    // ── Incoming messages ───────────────────────────────────────────────────────────
+    // ── Incoming messages ──────────────────────────────────────────────────────
 
-    // History batch on first connect
     connection.on('ReceiveHistory', (messages) => {
         for (const { user, message } of messages)
             appendMessage(user, message, false);
 
-        // Separator so the user knows where history ends
         const sep = document.createElement('div');
         sep.className = 'msg-separator';
         sep.textContent = '―― histórico ――';
@@ -113,29 +111,17 @@ export function initChat() {
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    // ── Connection state ───────────────────────────────────────────────────────────
+    // ── Connection state ───────────────────────────────────────────────────────
 
-    connection.onreconnecting(() => {
-        sendBtn.disabled = true;
-    });
-
-    connection.onreconnected(() => {
-        sendBtn.disabled = false;
-    });
-
-    connection.onclose(() => {
-        sendBtn.disabled = true;
-    });
+    connection.onreconnecting(() => { sendBtn.disabled = true; });
+    connection.onreconnected(()  => { sendBtn.disabled = false; });
+    connection.onclose(()        => { sendBtn.disabled = true; });
 
     connection.start()
-        .then(() => {
-            sendBtn.disabled = false;
-        })
-        .catch(err => {
-            console.error('Falha ao conectar: ' + err);
-        });
+        .then(() => { sendBtn.disabled = false; })
+        .catch(err => console.error('Falha ao conectar: ' + err));
 
-    // ── Send ───────────────────────────────────────────────────────────────
+    // ── Send ───────────────────────────────────────────────────────────────────
 
     async function send() {
         const message = messageInput.value.trim();
@@ -146,12 +132,10 @@ export function initChat() {
     }
 
     sendBtn.addEventListener('click', send);
-    messageInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') send();
-    });
+    messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 }
 
-// ---------- Helpers ----------
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 const USER_COLORS = [
     '#cba6f7', // mauve
@@ -172,6 +156,7 @@ function userColor(name) {
         hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
     return USER_COLORS[hash % USER_COLORS.length];
 }
+
 function escapeHtml(str) {
     return str
         .replace(/&/g, '&amp;')
