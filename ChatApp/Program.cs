@@ -10,5 +10,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<PingPongHub>("/pingponghub");
 
 app.Run();

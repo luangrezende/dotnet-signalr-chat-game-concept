@@ -1,0 +1,301 @@
+/* ============================================
+   game.css — game module styles
+   ============================================ */
+
+/* ---------- Placeholder (legacy) ---------- */
+
+.game-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    color: #585b70;
+    text-align: center;
+}
+
+.game-placeholder .game-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.game-placeholder h2 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6c7086;
+}
+
+.game-placeholder p {
+    font-size: 0.9rem;
+    color: #585b70;
+    letter-spacing: 1px;
+}
+
+/* ---------- Utility ---------- */
+
+.hidden { display: none !important; }
+
+/* ---------- Setup screen ---------- */
+
+.pp-setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 48px 20px;
+    text-align: center;
+}
+
+.pp-setup-icon {
+    font-size: 3rem;
+}
+
+.pp-setup h2 {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #cdd6f4;
+    margin: 0;
+}
+
+.pp-subtitle {
+    font-size: 0.85rem;
+    color: #6c7086;
+    margin: -8px 0 0;
+    letter-spacing: 0.5px;
+}
+
+.pp-players-form {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.pp-versus {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #585b70;
+    padding-top: 22px;
+}
+
+.pp-player-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.pp-player-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #a6adc8;
+}
+
+.pp-left label { color: #89b4fa; }
+.pp-right label { color: #a6e3a1; }
+
+.pp-key-hint {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.pp-player-field input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #313244;
+    background: #181825;
+    color: #cdd6f4;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+}
+
+.pp-left input:focus  { border-color: #89b4fa; }
+.pp-right input:focus { border-color: #a6e3a1; }
+
+/* ---------- Shared button ---------- */
+
+.pp-btn {
+    padding: 10px 28px;
+    border-radius: 8px;
+    border: none;
+    background: #89b4fa;
+    color: #1e1e2e;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, background 0.2s;
+}
+
+.pp-btn:hover  { opacity: 0.85; }
+.pp-btn:disabled { opacity: 0.35; cursor: default; }
+
+.pp-btn--secondary {
+    background: #313244;
+    color: #cdd6f4;
+}
+
+/* ---------- Game screen ---------- */
+
+.pp-game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px 20px;
+}
+
+/* Scoreboard */
+
+.pp-scoreboard {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 800px;
+    background: #181825;
+    border-radius: 10px;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+
+.pp-score-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pp-score-side--right {
+    justify-content: flex-end;
+}
+
+.pp-player-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #a6adc8;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pp-score-side:first-child .pp-player-name { color: #89b4fa; }
+.pp-score-side--right     .pp-player-name  { color: #a6e3a1; }
+
+.pp-score {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #cdd6f4;
+    font-variant-numeric: tabular-nums;
+    min-width: 2ch;
+    text-align: center;
+}
+
+.pp-score-divider {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #45475a;
+    padding: 0 10px;
+}
+
+/* Canvas wrapper */
+
+.pp-canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+}
+
+#pp-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+/* Result overlay */
+
+.pp-result {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 17, 27, 0.85);
+    border-radius: 10px;
+}
+
+.pp-result-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 36px 48px;
+    background: #1e1e2e;
+    border: 1px solid #313244;
+    border-radius: 14px;
+    text-align: center;
+}
+
+.pp-result-box h2 {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #cdd6f4;
+    margin: 0;
+}
+
+/* Controls hint */
+
+.pp-controls-hint {
+    font-size: 0.75rem;
+    color: #45475a;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* ---------- Lobby join form ---------- */
+
+.pp-join-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.pp-join-form input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #313244;
+    background: #181825;
+    color: #cdd6f4;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pp-join-form input:focus { border-color: #89b4fa; }
+
+.pp-lobby-status {
+    font-size: 0.82rem;
+    color: #a6adc8;
+    min-height: 1.2em;
+    letter-spacing: 0.3px;
+}
