@@ -157,7 +157,7 @@ public class PingPongHub : Hub
             _p1Id = null; _p1Name = null;
         }
         await Clients.Caller.SendAsync("QueueCancelled");
-        await Clients.Others.SendAsync("LobbyUpdate", (string?)null);
+        await Clients.All.SendAsync("LobbyUpdate", (string?)null);
     }
 
     // --- Leave lobby queue ---------------------------------------------------
