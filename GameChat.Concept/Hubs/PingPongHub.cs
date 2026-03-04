@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace ChatApp.Hubs;
+namespace GameChat.Concept.Hubs;
 
 /// <summary>
 /// Handles online multiplayer Ping Pong.

@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ChatApp/ChatApp.csproj ChatApp/
-RUN dotnet restore ChatApp/ChatApp.csproj
+COPY GameChat.Concept/GameChat.Concept.csproj GameChat.Concept/
+RUN dotnet restore GameChat.Concept/GameChat.Concept.csproj
 
-COPY ChatApp/ ChatApp/
-WORKDIR /src/ChatApp
+COPY GameChat.Concept/ GameChat.Concept/
+WORKDIR /src/GameChat.Concept
 RUN dotnet publish -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
@@ -14,4 +14,4 @@ COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
 
-ENTRYPOINT ["dotnet", "ChatApp.dll"]
+ENTRYPOINT ["dotnet", "GameChat.Concept.dll"]

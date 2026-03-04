@@ -8,6 +8,8 @@
 //     Sends only its own paddle Y; renders state received from P1.
 // ============================================
 
+import { getUserName } from '../user.js';
+
 const W = 800, H = 500;
 const PADDLE_W = 14, PADDLE_H = 80, PADDLE_SPEED = 2;
 const BALL_R = 8;
@@ -19,7 +21,6 @@ export function initPingPong() {
     // ── DOM ──────────────────────────────────────────────────────────────────
     const lobbyEl       = document.getElementById('pingpong-lobby');
     const gameEl        = document.getElementById('pingpong-game');
-    const joinNameEl    = document.getElementById('pp-join-name');
     const joinBtnEl     = document.getElementById('pp-join-btn');
     const statusEl      = document.getElementById('pp-lobby-status');
 
@@ -59,9 +60,12 @@ export function initPingPong() {
     let gameRunning = false;
     let animId      = null;
 
-    // ── Enable join button while user types ──────────────────────────────────
-    joinNameEl.addEventListener('input', () => {
-        joinBtnEl.disabled = joinNameEl.value.trim().length === 0;
+    // ── Enable join button when name is available ─────────────────────────
+    joinBtnEl.disabled = getUserName().length === 0;
+
+    // Keep button enabled/disabled in sync if name changes app-wide
+    window.addEventListener('gchat:namechanged', () => {
+        joinBtnEl.disabled = getUserName().length === 0;
     });
 
     // ── SignalR: server → client ─────────────────────────────────────────────
@@ -73,7 +77,6 @@ export function initPingPong() {
     connection.on('RoomFull', () => {
         setStatus('❌ Sala cheia. Aguarde e tente novamente.', true);
         joinBtnEl.disabled = false;
-        joinNameEl.disabled = false;
     });
 
     connection.on('GameStart', (name1, name2, slot) => {
@@ -120,28 +123,25 @@ export function initPingPong() {
     // ── Connect ──────────────────────────────────────────────────────────────
     connection.start()
         .then(() => {
-            joinBtnEl.disabled = joinNameEl.value.trim().length === 0;
+            joinBtnEl.disabled = getUserName().length === 0;
         })
         .catch(err => setStatus('Falha ao conectar: ' + err, true));
 
     // ── Join ─────────────────────────────────────────────────────────────────
     async function doJoin() {
-        const name = joinNameEl.value.trim();
+        const name = getUserName();
         if (!name || joinBtnEl.disabled) return;
-        joinBtnEl.disabled  = true;
-        joinNameEl.disabled = true;
+        joinBtnEl.disabled = true;
         setStatus('Conectando...');
         try {
             await connection.invoke('JoinGame', name);
         } catch (err) {
             setStatus('Erro ao entrar: ' + err, true);
             joinBtnEl.disabled  = false;
-            joinNameEl.disabled = false;
         }
     }
 
     joinBtnEl.addEventListener('click', doJoin);
-    joinNameEl.addEventListener('keydown', e => { if (e.key === 'Enter') doJoin(); });
 
     // ── Start / restart game ─────────────────────────────────────────────────
     function startGame(name1, name2, slot) {
@@ -360,8 +360,7 @@ export function initPingPong() {
         stopLoop();
         gameEl.classList.add('hidden');
         lobbyEl.classList.remove('hidden');
-        joinNameEl.disabled = false;
-        joinBtnEl.disabled  = joinNameEl.value.trim().length === 0;
+        joinBtnEl.disabled = getUserName().length === 0;
     }
 
     function stopLoop() {
@@ -393,6 +392,6 @@ export function initPingPong() {
         // Disconnect so server clears the room (peer gets OpponentLeft)
         try { await connection.stop(); } catch {}
         await connection.start().catch(() => {});
-        joinBtnEl.disabled = joinNameEl.value.trim().length === 0;
+        joinBtnEl.disabled = getUserName().length === 0;
     });
 }

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GameChat Concept</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
+    <link rel="stylesheet" href="/css/game.css" />
+</head>
+<body>
+
+    <!-- ===== Name modal (first visit) ===== -->
+    <div id="name-modal" class="name-modal hidden">
+        <div class="name-modal-box">
+            <div class="name-modal-icon">🎮</div>
+            <h2>Bem-vindo ao GameChat!</h2>
+            <p>Como quer ser chamado?</p>
+            <input id="name-modal-input" type="text" maxlength="20"
+                   placeholder="Seu nome..." autocomplete="off" />
+            <button id="name-modal-btn" disabled>Entrar</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <header class="app-header">
+            <span class="app-title">🎮 GameChat Concept</span>
+        </header>
+
+        <div class="app-body">
+
+            <!-- ===== Games Panel ===== -->
+            <div class="games-panel">
+                <nav class="game-tabs">
+                    <button class="tab-btn active" data-tab="pingpong">🏓 Ping Pong</button>
+                </nav>
+
+                <div class="game-content">
+
+                    <!-- Ping Pong Module -->
+                    <section id="tab-pingpong" class="tab-panel active">
+
+                        <!-- Lobby / Join Screen -->
+                        <div id="pingpong-lobby" class="pp-setup">
+                            <span class="pp-setup-icon">🏓</span>
+                            <h2>Ping Pong</h2>
+                            <p class="pp-subtitle">Multiplayer online — 2 jogadores</p>
+                            <div class="pp-join-form">
+                                <button id="pp-join-btn" class="pp-btn" disabled>Entrar na partida</button>
+                            </div>
+                            <p id="pp-lobby-status" class="pp-lobby-status"></p>
+                        </div>
+
+                        <!-- Game Screen -->
+                        <div id="pingpong-game" class="pp-game hidden">
+                            <div class="pp-scoreboard">
+                                <div class="pp-score-side">
+                                    <span id="pp-name-display1" class="pp-player-name">Jogador 1</span>
+                                    <span id="pp-score1" class="pp-score">0</span>
+                                </div>
+                                <div class="pp-score-divider">:</div>
+                                <div class="pp-score-side pp-score-side--right">
+                                    <span id="pp-score2" class="pp-score">0</span>
+                                    <span id="pp-name-display2" class="pp-player-name">Jogador 2</span>
+                                </div>
+                            </div>
+                            <div class="pp-canvas-wrap">
+                                <canvas id="pp-canvas"></canvas>
+                                <!-- Win overlay (inside canvas wrap) -->
+                                <div id="pingpong-result" class="pp-result hidden">
+                                    <div class="pp-result-box">
+                                        <h2 id="pp-winner-text">Jogador 1 venceu!</h2>
+                                        <button id="pp-play-again-btn" class="pp-btn">Jogar Novamente</button>
+                                        <button id="pp-new-names-btn" class="pp-btn pp-btn--secondary">Voltar ao Lobby</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="pp-controls-hint" class="pp-controls-hint"></p>
+                        </div>
+
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- ===== Chat Panel (always active) ===== -->
+            <div class="chat-panel">
+                <div class="chat-panel-header">
+                    <span>💬 Chat</span>
+                    <button id="chat-change-name-btn" class="chat-name-tag" title="Alterar nome"></button>
+                </div>
+                <div class="chat-container">
+                    <div id="messages"></div>
+                    <div class="chat-status" id="chat-status">Conectando...</div>
+                    <div class="input-area">
+                        <input id="messageInput" type="text" placeholder="Mensagem..." />
+                        <button id="sendBtn" disabled>↑</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SignalR client (global, consumed by chat module) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+    <!-- App entry point (ES module) -->
+    <script src="/js/app.js" type="module"></script>
+</body>
+</html>

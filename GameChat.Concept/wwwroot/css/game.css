@@ -273,25 +273,7 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    width: 100%;
-    max-width: 280px;
 }
-
-.pp-join-form input {
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid #313244;
-    background: #181825;
-    color: #cdd6f4;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.pp-join-form input:focus { border-color: #89b4fa; }
 
 .pp-lobby-status {
     font-size: 0.82rem;
