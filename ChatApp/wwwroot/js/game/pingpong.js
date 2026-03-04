@@ -12,8 +12,8 @@ const W = 800, H = 500;
 const PADDLE_W = 14, PADDLE_H = 80, PADDLE_SPEED = 2;
 const BALL_R = 8;
 const BALL_SPEED     = 1;   // velocidade inicial da bola (px/frame)
-const BALL_SPEED_MAX = 5;  // velocidade máxima da bola
-const WIN_SCORE = 5;
+const BALL_SPEED_MAX = 3;  // velocidade máxima da bola
+const WIN_SCORE = 10;
 
 export function initPingPong() {
     // ── DOM ──────────────────────────────────────────────────────────────────
@@ -81,12 +81,12 @@ export function initPingPong() {
     });
 
     // P2 receives full game state from P1 every frame
-    connection.on('ReceiveGameState', (ballX, ballY, p1y, p2y, s1, s2) => {
+    // NOTE: p2y is intentionally ignored — P2 owns its own paddle position locally
+    connection.on('ReceiveGameState', (ballX, ballY, p1y, _p2y, s1, s2) => {
         if (mySlot !== 2) return;
         game.ball.x   = ballX;
         game.ball.y   = ballY;
         game.p1y      = p1y;
-        game.p2y      = p2y;
         game.score[1] = s1;
         game.score[2] = s2;
         updateScores();
